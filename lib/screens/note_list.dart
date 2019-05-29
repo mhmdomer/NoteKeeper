@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'details.dart';
 
 class NoteList extends StatefulWidget {
 
@@ -15,11 +16,13 @@ class ListState extends State<NoteList> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Notes'),),
+      appBar: AppBar(
+        title: Text('Notes'),
+      ),
       body: getNoteListView(),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-
+          navigateToDetails('New Note');
         },
         tooltip: 'Add Note',
         elevation: 10,
@@ -47,12 +50,18 @@ class ListState extends State<NoteList> {
             subtitle: Text('Dummy subtitle'),
             trailing: Icon(Icons.delete),
             onTap: () {
-              //TODO
+              navigateToDetails('Edit Note');
             },
           ),
         );
       },
     );
 
+  }
+
+  void navigateToDetails(String title) {
+    Navigator.push(context, MaterialPageRoute(builder: (context) {
+      return Details(title);
+    }));
   }
 }

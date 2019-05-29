@@ -2,14 +2,19 @@ import 'package:flutter/material.dart';
 
 class Details extends StatefulWidget {
 
+  String title;
+  Details(this.title);
+
   @override
   State createState() {
-    return DetailsState();
+    return DetailsState(title);
   }
 }
 
 class DetailsState extends State<Details> {
 
+  String title;
+  DetailsState(this.title);
 
   List<String> priorities = ['High', 'Low'];
   String priority;
@@ -26,8 +31,17 @@ class DetailsState extends State<Details> {
   Widget build(BuildContext context) {
 
     TextStyle style = Theme.of(context).textTheme.subtitle;
-    return Scaffold(
-      appBar: AppBar(title: Text('Edit Note'),),
+    return WillPopScope(
+      onWillPop: () {
+        previousPage();
+      },
+      child: Scaffold(
+      appBar: AppBar(
+        title: Text(title),
+        leading: IconButton(icon: Icon(Icons.arrow_back), onPressed: () {
+          previousPage();
+        }),
+      ),
       body: Padding(
         padding: EdgeInsets.only(top: 15, left: 10, right: 10),
         child: ListView(
@@ -60,7 +74,7 @@ class DetailsState extends State<Details> {
                 },
                 decoration: InputDecoration(
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(5)
+                    borderRadius: BorderRadius.circular(20)
                   ),
                   labelText: 'Title',
                   labelStyle: style,
@@ -77,7 +91,7 @@ class DetailsState extends State<Details> {
                 },
                 decoration: InputDecoration(
                   border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(5)
+                      borderRadius: BorderRadius.circular(20)
                   ),
                   labelText: 'Description',
                   labelStyle: style,
@@ -119,7 +133,12 @@ class DetailsState extends State<Details> {
           ],
         ),
       )
+    )
     );
 
+  }
+
+  void previousPage() {
+    Navigator.pop(context);
   }
 }
