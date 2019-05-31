@@ -1,77 +1,81 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
+import 'package:note_keeper/models/note.dart';
+import 'package:note_keeper/utils/database_helper.dart';
+import 'package:intl/intl.dart';
 
 class Details extends StatefulWidget {
 
-  String title;
-  Details(this.title);
+  final String title;
+  final Note note;
+  Details(this.note, this.title);
 
   @override
   State createState() {
-    return DetailsState(title);
+    return DetailsState(note, title);
   }
 }
 
 class DetailsState extends State<Details> {
 
   String title;
-  DetailsState(this.title);
+  Note note;
+  DetailsState(this.note, this.title);
+  DatabaseHelper helper = DatabaseHelper();
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
+  final _formKey = GlobalKey<FormState>();
 
-  List<String> priorities = ['High', 'Low'];
-  String priority;
+  List<int> priorities = [1, 2];
   TextEditingController titleController = TextEditingController();
   TextEditingController descriptionController= TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-    priority = priorities[0];
-  }
 
   @override
   Widget build(BuildContext context) {
 
     TextStyle style = Theme.of(context).textTheme.subtitle;
-    return WillPopScope(
-      onWillPop: () {
-        previousPage();
-      },
-      child: Scaffold(
+    titleController.text = note.title;
+    descriptionController.text = note.description;
+    return Scaffold(
+      key: _scaffoldKey,
       appBar: AppBar(
         title: Text(title),
         leading: IconButton(icon: Icon(Icons.arrow_back), onPressed: () {
           previousPage();
         }),
       ),
-      body: Padding(
+      body: Form(
+        key: _formKey,
+        child: Padding(
         padding: EdgeInsets.only(top: 15, left: 10, right: 10),
-        child: ListView(
+        child: Column(
           children: <Widget>[
             Text('Priority:', style: style,),
             ListTile(
               title: DropdownButton(
-                items: priorities.map((String value) {
+                items: priorities.map((int value) {
                   return DropdownMenuItem(
-                    child: Text(value),
+                    child: Text(value == 1? 'High' : 'Low'),
                     value: value,
                   );
                 }).toList(),
                 style: style,
-                onChanged: (String value) {
+                onChanged: (value) {
                   setState(() {
-                    priority = value;
+                    note.priority = value;
                   });
                 },
-                value: priority,
+                value: note.priority,
               ),
             ),
             Padding(
               padding: EdgeInsets.only(top: 10, bottom: 10),
-              child: TextField(
+              child: TextFormField(
                 controller: titleController,
                 style: style,
-                onChanged: (String value) {
-
+                onSaved: (String value) {
+                  note.title = value;
                 },
+                validator: (value) => validate(value),
                 decoration: InputDecoration(
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(20)
@@ -81,26 +85,34 @@ class DetailsState extends State<Details> {
                 ),
               ),
             ),
-            Padding(
-              padding: EdgeInsets.only(top: 10, bottom: 10),
-              child: TextField(
-                controller: descriptionController,
-                style: style,
-                onChanged: (String value) {
-
-                },
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(20)
+            Expanded(
+//              flex: 3,
+              child: Padding(
+                padding: EdgeInsets.only(top: 10, bottom: 10),
+                child: TextFormField(
+//                  maxLines: 100,
+//                  minLines: 20,
+                  controller: descriptionController,
+                  style: style,
+                  onSaved: (String value) {
+                    note.description = value;
+                  },
+                  validator: (String value) => validate(value),
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(20)
+                    ),
+                    labelText: 'Description',
+                    labelStyle: style,
                   ),
-                  labelText: 'Description',
-                  labelStyle: style,
                 ),
               ),
             ),
             Padding(
               padding: EdgeInsets.only(top: 5, bottom: 5),
-              child: Row(
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: Row(
                 children: <Widget>[
                   Expanded(
                     child: RaisedButton(
@@ -110,7 +122,7 @@ class DetailsState extends State<Details> {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
                       elevation: 4,
                       onPressed: () {
-
+                        _save();
                       },
                     ),
                   ),
@@ -123,14 +135,14 @@ class DetailsState extends State<Details> {
                       child: Text('Delete', textScaleFactor: 1.2,),
                       elevation: 4,
                       onPressed: () {
-
+                        _delete();
                       },
                     ),
                   ),
                 ],
               ),
             )
-          ],
+            )],
         ),
       )
     )
@@ -139,6 +151,60 @@ class DetailsState extends State<Details> {
   }
 
   void previousPage() {
-    Navigator.pop(context);
+    Navigator.pop(context, true);
+  }
+
+  void _save() async {
+    if(_formKey.currentState.validate()){
+      print('saving...');
+      if(note.title.isEmpty || note.description.isEmpty) {
+        _showSnack(context, 'Please fill all the fields');
+        return;
+      }
+      previousPage();
+      note.date = DateFormat.yMMMd().format(DateTime.now());
+      int result;
+      if(note.id == null) {
+        result = await helper.insertNote(note);
+      } else {
+        result = await helper.updateNote(note);
+      }
+      if(result == 0) {
+        _showDialog('Status', 'An error accured');
+      }
+    }
+  }
+
+  void _delete() async {
+    previousPage();
+    if(note.id == null) {
+      return;
+    } else {
+      int result = await helper.deleteNote(note.id);
+      if(result == 0) {
+        _showDialog('Status', 'An error accured');
+      } else {
+        _showSnack(context, 'Note Deleted Successfully');
+      }
+    }
+  } 
+
+  void _showDialog(String title, String message) {
+    AlertDialog dialog = AlertDialog(
+      content: Text(message),
+      title: Text(title),
+    );
+    showDialog(context: context, builder: (_) => dialog);
+  }
+
+  void _showSnack(BuildContext context, String message) {
+    SnackBar snackBar = SnackBar(content: Text(message), duration: Duration(seconds: 2),);
+    _scaffoldKey.currentState.showSnackBar(snackBar);
+  }
+
+  validate(String value) {
+    if(value.isEmpty){
+      return 'please fill this field';
+    }
   }
 }

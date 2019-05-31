@@ -6,8 +6,8 @@ class Note {
   String _date;
   int _priority;
 
-  Note(this._title, this._description, this._date, this._priority);
-  Note.withId(this._id, this._title, this._description, this._date, this._priority);
+  Note(this._title, this._description, this._priority, [this._date]);
+  Note.withId(this._id, this._title, this._description, this._priority, [this._date]);
 
   int get id => _id;
   String get title => _title;
