@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:note_keeper/models/note.dart';
 import 'package:note_keeper/utils/database_helper.dart';
-import 'dart:async';
 import 'package:note_keeper/screens/details.dart';
-import 'package:sqflite/sqflite.dart';
 
 
 
 class NoteList extends StatefulWidget {
 
   @override
-  State createState() {
+  State<NoteList> createState() {
     return ListState();
   }
 }
@@ -54,7 +52,7 @@ class ListState extends State<NoteList> {
       itemBuilder: (BuildContext context, int position) {
         return Card(
           color: Colors.white,
-          elevation: 1,
+          elevation: 3,
           child: ListTile(
             leading: CircleAvatar(
               backgroundColor: getPriorityColor(noteList[position].priority),
@@ -62,7 +60,7 @@ class ListState extends State<NoteList> {
             ),
             title: Text(noteList[position].title, style: titleStyle,),
             subtitle: Text(noteList[position].date),
-            trailing: IconButton(icon: Icon(Icons.delete), onPressed: () => delete(context, noteList[position].id),),
+            trailing: IconButton(icon: Icon(Icons.delete), onPressed: () => confirmDelete(context, noteList[position].id),),
             onTap: () {
               navigateToDetails(noteList[position], 'Edit Note');
             },
@@ -104,7 +102,7 @@ class ListState extends State<NoteList> {
   }
 
   void _showSnack(BuildContext context, String message) {
-    SnackBar snackBar = SnackBar(content: Text(message));
+    SnackBar snackBar = SnackBar(content: Text(message), duration: Duration(seconds: 1),);
     Scaffold.of(context).showSnackBar(snackBar);
   }
 
@@ -114,5 +112,26 @@ class ListState extends State<NoteList> {
      noteList = newList;
      count = noteList.length;
     });
+  }
+
+  void confirmDelete(BuildContext context, int id) {
+    AlertDialog dialog = AlertDialog(
+      content: Text('Are you sure you want to delete this note?'),
+      title: Text('Delete'),
+      actions: <Widget>[
+        RaisedButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text('Cancel', style: TextStyle(color: Theme.of(context).primaryColorLight),),
+        ),
+        RaisedButton(
+          onPressed: () {
+            Navigator.pop(context);
+            delete(context, id);
+          },
+          child: Text('Delete', style: TextStyle(color: Theme.of(context).primaryColorLight)),
+        ),
+      ],
+    );
+    showDialog(context: context, builder: (BuildContext context) => dialog);
   }
 }
