@@ -43,7 +43,13 @@ class DetailsState extends State<Details> {
           title: Text(title),
           actions: <Widget>[
             IconButton(
-                icon: Icon(Icons.delete), onPressed: () => confirmDelete()),
+                icon: Icon(Icons.delete), onPressed: () {
+                  if(note.id == null && titleController.text == '' && descriptionController.text == '') {
+                    Navigator.pop(context);
+                  } else {
+                    confirmDelete();
+                  }
+                },),
             FlatButton(
                 onPressed: () => _save(),
                 child: Text(

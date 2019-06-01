@@ -50,19 +50,20 @@ class ListState extends State<NoteList> {
     return ListView.builder(
       itemCount: count,
       itemBuilder: (BuildContext context, int position) {
+        Note note = noteList[position];
         return Card(
           color: Colors.white,
           elevation: 3,
           child: ListTile(
             leading: CircleAvatar(
-              backgroundColor: getPriorityColor(noteList[position].priority),
+              backgroundColor: getPriorityColor(note.priority),
               child: Icon(Icons.keyboard_arrow_right),
             ),
-            title: Text(noteList[position].title, style: titleStyle,),
-            subtitle: Text(noteList[position].date),
-            trailing: IconButton(icon: Icon(Icons.delete), onPressed: () => confirmDelete(context, noteList[position].id),),
+            title: Text(note.title, style: titleStyle,),
+            subtitle: Text(note.description.length > 60 ? note.description.substring(0, 60) + '...' : note.description),
+            trailing: IconButton(icon: Icon(Icons.delete), onPressed: () => confirmDelete(context, note.id),),
             onTap: () {
-              navigateToDetails(noteList[position], 'Edit Note');
+              navigateToDetails(note, 'Edit Note');
             },
           ),
         );
